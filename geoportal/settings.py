@@ -14,6 +14,10 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+if os.name == 'nt':
+    VENV_BASE = os.environ['VIRTUAL_ENV']
+    os.environ['PATH'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo') + ';' + os.environ['PATH']
+    os.environ['PROJ_LIB'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo\\data\\proj') + ';' + os.environ['PATH']
 
 
 # Quick-start development settings - unsuitable for production
@@ -80,9 +84,9 @@ WSGI_APPLICATION = 'geoportal.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'geoportal',
+        'NAME': 'geoportal_web',
         'USER': 'postgres',  # Not used with sqlite3.
-        'PASSWORD': 'admin',  # Not used with sqlite3.
+        'PASSWORD': '12345',  # Not used with sqlite3.
         'HOST': '127.0.0.1',  # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '5432',  # Set to empty string for default. Not used with sqlite3.
     }
