@@ -35,9 +35,10 @@ def add_detail_gis(gis_id,name,detail):
 
 def add_gis_secto(geom):
     try:
+        type_gis = 6
         if geom.geom_type == 'Polygon':
             geom = [geom]
-        type_gis = type_gis_map.get(geom.geom_type, 0)
+            type_gis = 3
         geom = MultiPolygon(geom)
         geom_convert = GEOSGeometry(geom.wkt)
         gisModel = GISModel(
