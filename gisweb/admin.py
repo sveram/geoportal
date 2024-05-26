@@ -10,4 +10,6 @@ admin.site.register(SubCategory, LeafletGeoAdmin)
 admin.site.register(Indicator, LeafletGeoAdmin)
 admin.site.register(TypeSource, LeafletGeoAdmin)
 admin.site.register(IndicatorData, LeafletGeoAdmin)
+admin.site.register(GISModel, LeafletGeoAdmin)
+admin.site.register(GISDetail, LeafletGeoAdmin)
 
