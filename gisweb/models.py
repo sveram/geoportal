@@ -50,7 +50,7 @@ class GISModel(BaseModel):
     multilinestring = spatialmodels.MultiLineStringField(verbose_name='Multilinea',srid=3857, null=True, blank=True)
     multipolygon = spatialmodels.MultiPolygonField(verbose_name='Multipoligono', srid=3857, null=True, blank=True)
     #Datos geografico raste
-    raster = spatialmodels.RasterField(verbose_name='Raster', srid=3857)
+    # raster = spatialmodels.RasterField(verbose_name='Raster', srid=3857)
 
     class Meta:
         verbose_name = 'Modelo GIS'
