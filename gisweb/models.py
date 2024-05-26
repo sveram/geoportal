@@ -27,6 +27,53 @@ class BaseModel(models.Model):
             self.create_datetime = datetime.now()
         models.Model.save(self)
 
+
+TYPE_GIS = (
+    (0,'File'),
+    (1,'Point'),
+    (2,'LineString'),
+    (3,'Polygon'),
+    (4,'MultiPoint'),
+    (5,'MultiLineString'),
+    (6,'MultiPolygon'),
+    (7,'RasterFile'),
+)
+class GISModel(BaseModel):
+    type_gis = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_GIS, default=0)
+    file = models.FileField(upload_to='GISModels/%Y/%m/%d', null=True, blank=True)
+    #Datos geograficos lineales
+    point = spatialmodels.PointField(verbose_name='Punto', srid=3857,null=True, blank=True)
+    linestring = spatialmodels.LineStringField(verbose_name='Linea',srid=3857, null=True, blank=True)
+    polygon = spatialmodels.PolygonField(verbose_name='Poligono',srid=3857, null=True, blank=True)
+    #Datos geograficos multiple
+    multipoint = spatialmodels.MultiPointField(verbose_name='Multipunto', srid=3857, null=True, blank=True)
+    multilinestring = spatialmodels.MultiLineStringField(verbose_name='Multilinea',srid=3857, null=True, blank=True)
+    multipolygon = spatialmodels.MultiPolygonField(verbose_name='Multipoligono', srid=3857, null=True, blank=True)
+    #Datos geografico raste
+    raster = spatialmodels.RasterField(verbose_name='Raster', srid=3857)
+
+    class Meta:
+        verbose_name = 'Modelo GIS'
+        verbose_name_plural = 'Modelos GIS'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.get_type_gis_display()}"
+
+class GISDetail(BaseModel):
+    gismodel = models.ForeignKey(GISModel, verbose_name='GIS', null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=500, verbose_name='Nombre', null=True, blank=True)
+    detail = models.TextField(verbose_name='Detalle', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Detalle GIS'
+        verbose_name_plural = 'Detalles GIS'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name}"
+
+
 class TypeSector(BaseModel):
     name = models.CharField(verbose_name='Nombre', max_length=350)
 
@@ -42,9 +89,7 @@ class Sector(BaseModel):
     type_sector = models.ForeignKey(TypeSector, verbose_name='Tipo sector', on_delete=models.CASCADE)
     name = models.CharField(verbose_name='Nombre', max_length=350)
     sectormaster = models.ForeignKey('self', verbose_name='Sector padre', on_delete=models.PROTECT, null=True, blank=True)
-    geo_point = spatialmodels.PointField(srid=3857, null=True, blank=True)
-    geo_line = spatialmodels.LineStringField(srid=3857, null=True, blank=True)
-    geo_polygon = spatialmodels.MultiPolygonField(srid=3857, null=True, blank=True)
+    gismodel = models.ForeignKey(GISModel, verbose_name='GIS', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return f'{self.name} ({self.type_sector})'
@@ -221,10 +266,7 @@ class IndicatorData(BaseModel):
     type_value = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_VALUE, default=0)
     value = models.IntegerField(verbose_name='Valor',default=0)
     sector = models.ForeignKey(Sector, verbose_name='Sector', null=True, blank=True, on_delete=models.CASCADE)
-    #files = models.FileField()
-    geo_point = spatialmodels.PointField(srid=3857, null=True, blank=True)
-    geo_line = spatialmodels.LineStringField(srid=3857, null=True, blank=True)
-    geo_polygon = spatialmodels.PolygonField(srid=3857, null=True, blank=True)
+    gismodel = models.ForeignKey(GISModel, verbose_name='GIS', null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.indicator}: {self.value}({self.type_value})'
