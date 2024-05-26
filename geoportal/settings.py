@@ -14,10 +14,10 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-if os.name == 'nt':
-    VENV_BASE = os.environ['VIRTUAL_ENV']
-    os.environ['PATH'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo') + ';' + os.environ['PATH']
-    os.environ['PROJ_LIB'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo\\data\\proj') + ';' + os.environ['PATH']
+#if os.name == 'nt':
+#    VENV_BASE = os.environ['VIRTUAL_ENV']
+#    os.environ['PATH'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo') + ';' + os.environ['PATH']
+#    os.environ['PROJ_LIB'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo\\data\\proj') + ';' + os.environ['PATH']
 
 
 # Quick-start development settings - unsuitable for production
@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'leaflet',
+    'djgeojson',
     'gisweb',
 ]
 
@@ -87,7 +89,7 @@ DATABASES = {
         'NAME': 'geoportal_web',
         'USER': 'postgres',  # Not used with sqlite3.
         'PASSWORD': '12345',  # Not used with sqlite3.
-        'HOST': '127.0.0.1',  # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '172.18.0.1',  # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '5432',  # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -147,9 +149,16 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login"
 
 USE_I18N = True
-if os.name == 'nt':
-    VIRTUAL_ENV_BASE = os.environ['VIRTUAL_ENV']
-    os.environ['PATH'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
-    os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo\data\proj')
-GDAL_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\gdal304.dll'
-GEOS_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\geos_c.dll'
+#if os.name == 'nt':
+#    VIRTUAL_ENV_BASE = os.environ['VIRTUAL_ENV']
+#    os.environ['PATH'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
+#    os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo\data\proj')
+#GDAL_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\gdal304.dll'
+#GEOS_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\geos_c.dll'
+LEAFLET_CONFIG = {
+    'DEFAULT_CENTER': (-1.015209, -78.614672),
+    'DEFAULT_ZOOM': 6,
+    'MAX_ZOOM': 20,
+    'MIN_ZOOM':3,
+    'SCALE': 'both'
+}

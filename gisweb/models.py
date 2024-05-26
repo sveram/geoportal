@@ -44,7 +44,7 @@ class Sector(BaseModel):
     sectormaster = models.ForeignKey('self', verbose_name='Sector padre', on_delete=models.PROTECT, null=True, blank=True)
     geo_point = spatialmodels.PointField(srid=3857, null=True, blank=True)
     geo_line = spatialmodels.LineStringField(srid=3857, null=True, blank=True)
-    geo_polygon = spatialmodels.PolygonField(srid=3857, null=True, blank=True)
+    geo_polygon = spatialmodels.MultiPolygonField(srid=3857, null=True, blank=True)
 
     def __str__(self):
         return f'{self.name} ({self.type_sector})'
@@ -221,6 +221,7 @@ class IndicatorData(BaseModel):
     type_value = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_VALUE, default=0)
     value = models.IntegerField(verbose_name='Valor',default=0)
     sector = models.ForeignKey(Sector, verbose_name='Sector', null=True, blank=True, on_delete=models.CASCADE)
+    #files = models.FileField()
     geo_point = spatialmodels.PointField(srid=3857, null=True, blank=True)
     geo_line = spatialmodels.LineStringField(srid=3857, null=True, blank=True)
     geo_polygon = spatialmodels.PolygonField(srid=3857, null=True, blank=True)

@@ -38,7 +38,7 @@ class Panel(TemplateView):
                 'title': 'Inicio',
                 # 'form': form
             }
-            adddatauser(request,context)
+           # adddatauser(request,context)
             if 'vwa' in request.GET:
                 context['vwa'] = vwa = request.GET['vwa']
                 if vwa == 'add':
