@@ -3,6 +3,8 @@
 import os
 import sys
 
+from geoportal.settings import MEDIA_ROOT
+
 SITE_ROOT = os.path.dirname(os.path.realpath(__file__))
 your_djangoproject_home = os.path.split(SITE_ROOT)[0]
 sys.path.append(your_djangoproject_home)
@@ -16,7 +18,8 @@ from gisweb.models import TypeSector, Sector, GISModel, TYPE_GIS, GISDetail
 from shapely.geometry.multipolygon import MultiPolygon
 from django.contrib.gis.geos import GEOSGeometry
 
-dir_base = '/mnt/c/Users/PERSONAL/Downloads/Provincias/'
+
+dir_base = os.path.join(MEDIA_ROOT, 'data')
 
 type_gis_map = {v: k for k, v in TYPE_GIS}
 
@@ -53,7 +56,7 @@ def add_gis_secto(geom):
 def read_migrate_sectores_prov():
     try:
         shapefile = gpd.read_file(dir_base + "Provincias1.shp")
-        typeSector = TypeSector.objects.get(id=2)
+        typeSector=TypeSector.objects.filter(name__icontains='Provincias').first()
         for index, shp in shapefile.iterrows():
             name = shp.DPA_DESPRO
             geom = shp.geometry
@@ -81,8 +84,8 @@ def read_migrate_sectores_prov():
 read_migrate_sectores_prov()
 def read_migrate_sectores_cant():
     try:
-        shapefile = gpd.read_file(dir_base + "Cantones/Cantones1.shp")
-        typeSector = TypeSector.objects.get(id=4)
+        shapefile = gpd.read_file(dir_base + "Cantones1.shp")
+        typeSector = TypeSector.objects.filter(name__icontains='Cantones').first()
         for index, shp in shapefile.iterrows():
             name = shp.DPA_DESCAN
             geom = shp.geometry
