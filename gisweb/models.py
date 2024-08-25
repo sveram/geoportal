@@ -319,7 +319,7 @@ class Indicator(models.Model):
     class Meta:
         verbose_name = 'Registro del Formulario'
         verbose_name_plural = 'Registros del Formulario'
-        ordering = ('sector', 'gis_model', 'indicador', 'indicator_data')
+        ordering = ('sector', 'gis_model', 'indicator_data')
 
     def __str__(self):
         return f'{self.sector} - {self.gis_model} - {self.indicator_data}'
