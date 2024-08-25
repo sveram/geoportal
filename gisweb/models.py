@@ -308,7 +308,7 @@ class IndicatorDataExtra(BaseModel):
     value = models.TextField(verbose_name='Valor')
 
 
-class Indicator(models.Model):
+class IndicatorResult(models.Model):
     # Ubicación geográfica (Sector)
     sector = models.ForeignKey(Sector, verbose_name='Sector', on_delete=models.PROTECT)
     # Tipo de geografía (GIS Model)
