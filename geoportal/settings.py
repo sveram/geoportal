@@ -89,7 +89,7 @@ DATABASES = {
         'NAME': 'geoportal_web',
         'USER': 'postgres',  # Not used with sqlite3.
         'PASSWORD': '12345',  # Not used with sqlite3.
-        'HOST': '172.18.0.1',  # Set to empty string for localhost. Not used with sqlite3.
+        'HOST': '172.21.112.1',  # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '5432',  # Set to empty string for default. Not used with sqlite3.
     }
 }
@@ -161,4 +161,4 @@ LEAFLET_CONFIG = {
     'MAX_ZOOM': 20,
     'MIN_ZOOM':3,
     'SCALE': 'both'
-}
+}   
