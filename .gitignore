@@ -1,4 +1,5 @@
 /venv/
 /gisweb/migrations/
 .idea**
-
+geoportal/*__pycache__/
+gisweb/*__pycache__/
