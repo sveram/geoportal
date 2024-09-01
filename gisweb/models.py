@@ -4,322 +4,300 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models as spatialmodels
 
 
-# Create your models here.
-
-class BaseModel(models.Model):
-    status = models.BooleanField(default=True, verbose_name='Estado')
-    create_user = models.ForeignKey(User, related_name='+', verbose_name=u'Usuario de creación', null=True, blank=True,
-                                    on_delete=models.PROTECT)
-    modify_user = models.ForeignKey(User, related_name='+', verbose_name=u'Usuario de modificación', null=True,
+# Base model with audit fields
+class AuditBaseModel(models.Model):
+    is_active = models.BooleanField(default=True, verbose_name='Active Status')
+    created_by = models.ForeignKey(User, related_name='+', verbose_name='Created by', null=True, blank=True,
+                                   on_delete=models.PROTECT)
+    modified_by = models.ForeignKey(User, related_name='+', verbose_name='Modified by', null=True,
                                     blank=True, on_delete=models.PROTECT)
-    create_datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name='Fecha de creación')
-    update_datetime = models.DateTimeField(auto_now_add=True, null=True, blank=True,
-                                           verbose_name='Fecha de modificación')
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name='Creation Timestamp')
+    updated_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, verbose_name='Modification Timestamp')
 
     class Meta:
         abstract = True
 
     def save(self, *args, **kwargs):
-        user = None
-        if len(args):
-            user = args[0].user.id
+        user = kwargs.pop('user', None)
         if self.id:
-            self.modify_user_id = user if user else None
-            self.update_datetime = datetime.now()
+            self.modified_by = user if user else None
+            self.updated_at = datetime.now()
         else:
-            self.create_user_id = user if user else None
-            self.create_datetime = datetime.now()
-        models.Model.save(self)
+            self.created_by = user if user else None
+            self.created_at = datetime.now()
+        super(AuditBaseModel, self).save(*args, **kwargs)
 
 
-TYPE_GIS = (
+# GIS Model type options
+GIS_TYPE_CHOICES = (
     (0, 'File'),
-    (1, 'Point'),
-    (2, 'LineString'),
-    (3, 'Polygon'),
-    (4, 'MultiPoint'),
-    (5, 'MultiLineString'),
-    (6, 'MultiPolygon'),
-    (7, 'RasterFile'),
+    (1, 'Point Geometry'),
+    (2, 'LineString Geometry'),
+    (3, 'Polygon Geometry'),
+    (4, 'MultiPoint Geometry'),
+    (5, 'MultiLineString Geometry'),
+    (6, 'MultiPolygon Geometry'),
+    (7, 'Raster File'),
 )
 
 
-class GISModel(BaseModel):
-    type_gis = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_GIS, default=0)
-    file = models.FileField(upload_to='GISModels/%Y/%m/%d', null=True, blank=True)
-    # Datos geograficos lineales
-    point = spatialmodels.PointField(verbose_name='Punto', srid=3857, null=True, blank=True)
-    linestring = spatialmodels.LineStringField(verbose_name='Linea', srid=3857, null=True, blank=True)
-    polygon = spatialmodels.PolygonField(verbose_name='Poligono', srid=3857, null=True, blank=True)
-    # Datos geograficos multiple
-    multipoint = spatialmodels.MultiPointField(verbose_name='Multipunto', srid=3857, null=True, blank=True)
-    multilinestring = spatialmodels.MultiLineStringField(verbose_name='Multilinea', srid=3857, null=True, blank=True)
-    multipolygon = spatialmodels.MultiPolygonField(verbose_name='Multipoligono', srid=3857, null=True, blank=True)
-
-    # Datos geografico raste
-    # raster = spatialmodels.RasterField(verbose_name='Raster', srid=3857)
+# Geographic Information System Model
+class GISRecord(AuditBaseModel):
+    gis_type = models.IntegerField(verbose_name='GIS Data Type', choices=GIS_TYPE_CHOICES, default=0)
+    data_file = models.FileField(upload_to='GISRecords/%Y/%m/%d', null=True, blank=True, verbose_name='Data File')
+    srid = models.IntegerField(verbose_name='Spatial Reference System Identifier (SRID)', default=3857)
+    # Spatial fields
+    point_geometry = spatialmodels.PointField(verbose_name='Point Geometry', null=True, blank=True)
+    linestring_geometry = spatialmodels.LineStringField(verbose_name='LineString Geometry', null=True, blank=True)
+    polygon_geometry = spatialmodels.PolygonField(verbose_name='Polygon Geometry', null=True, blank=True)
+    multipoint_geometry = spatialmodels.MultiPointField(verbose_name='MultiPoint Geometry', null=True, blank=True)
+    multilinestring_geometry = spatialmodels.MultiLineStringField(verbose_name='MultiLineString Geometry', null=True,
+                                                                  blank=True)
+    multipolygon_geometry = spatialmodels.MultiPolygonField(verbose_name='MultiPolygon Geometry', null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Modelo GIS'
-        verbose_name_plural = 'Modelos GIS'
+        verbose_name = 'Geographic Information System Record'
+        verbose_name_plural = 'Geographic Information System Records'
         ordering = ['id']
 
+    def save(self, *args, **kwargs):
+        if not self.srid:
+            self.srid = 3857  # Default SRID value
+        self.point_geometry.srid = self.srid
+        self.linestring_geometry.srid = self.srid
+        self.polygon_geometry.srid = self.srid
+        self.multipoint_geometry.srid = self.srid
+        self.multilinestring_geometry.srid = self.srid
+        self.multipolygon_geometry.srid = self.srid
+        super(GISRecord, self).save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.get_type_gis_display()}"
+        return f"{self.get_gis_type_display()} (SRID: {self.srid})"
 
 
-class GISDetail(BaseModel):
-    gismodel = models.ForeignKey(GISModel, verbose_name='GIS', null=True, blank=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=500, verbose_name='Nombre', null=True, blank=True)
-    detail = models.TextField(verbose_name='Detalle', null=True, blank=True)
+# GIS Detail Record
+class GISDetailRecord(AuditBaseModel):
+    gis_record = models.ForeignKey(GISRecord, verbose_name='Associated GIS Record', null=True, blank=True,
+                                   on_delete=models.CASCADE)
+    title = models.CharField(max_length=500, verbose_name='Title', null=True, blank=True)
+    description = models.TextField(verbose_name='Description', null=True, blank=True)
 
     class Meta:
-        verbose_name = 'Detalle GIS'
-        verbose_name_plural = 'Detalles GIS'
-        ordering = ['name']
+        verbose_name = 'Geographic Information System Detail Record'
+        verbose_name_plural = 'Geographic Information System Detail Records'
+        ordering = ['title']
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.title}"
 
 
-class TypeSector(BaseModel):
-    name = models.CharField(verbose_name='Nombre', max_length=350)
+# Sector Type
+class SectorType(AuditBaseModel):
+    name = models.CharField(verbose_name='Sector Type Name', max_length=350)
 
     def __str__(self):
         return f'{self.name}'
 
     class Meta:
-        verbose_name = 'Tipo sector'
-        verbose_name_plural = 'Tipos sectores'
+        verbose_name = 'Sector Type'
+        verbose_name_plural = 'Sector Types'
         ordering = ('name',)
 
 
-class Sector(BaseModel):
-    type_sector = models.ForeignKey(TypeSector, verbose_name='Tipo sector', on_delete=models.CASCADE)
-    name = models.CharField(verbose_name='Nombre', max_length=350)
-    sectormaster = models.ForeignKey('self', verbose_name='Sector padre', on_delete=models.PROTECT, null=True,
-                                     blank=True)
-    gismodel = models.ForeignKey(GISModel, verbose_name='GIS', on_delete=models.CASCADE, null=True, blank=True)
+# Sector Model
+class Sector(AuditBaseModel):
+    sector_type = models.ForeignKey(SectorType, verbose_name='Sector Type', on_delete=models.CASCADE)
+    name = models.CharField(verbose_name='Sector Name', max_length=350)
+    parent_sector = models.ForeignKey('self', verbose_name='Parent Sector', on_delete=models.PROTECT, null=True,
+                                      blank=True, db_index=True)
+    associated_gis_record = models.ForeignKey(GISRecord, verbose_name='Associated GIS Record', on_delete=models.CASCADE,
+                                              null=True, blank=True)
 
     def __str__(self):
-        return f'{self.name} ({self.type_sector})'
+        return f'{self.name} ({self.sector_type})'
 
     class Meta:
-        verbose_name = 'Sector'
-        verbose_name_plural = 'Sectores'
-        ordering = ('type_sector', 'name')
+        verbose_name = 'Geographical Sector'
+        verbose_name_plural = 'Geographical Sectors'
+        ordering = ('sector_type', 'name')
 
-    def subordinados(self):
-        return Sector.objects.values('id').filter(status=True, sectormaster=self).exists()
+    def has_subordinates(self):
+        return Sector.objects.values('id').filter(is_active=True, parent_sector=self).exists()
 
-    def loadsubordinados(self):
-        return Sector.objects.filter(status=True, sectormaster=self).order_by('type_sector', 'name')
+    def get_subordinates(self):
+        return Sector.objects.filter(is_active=True, parent_sector=self).order_by('sector_type', 'name')
 
 
-# class Pais(BaseModel):
-#     name = models.CharField(verbose_name='Nombre',max_length=500)
-#     reference = spatialmodels.PolygonField(srid=3857)
-#
-#     def __str__(self):
-#         return f'{self.name}'
-#
-#     class Meta:
-#         verbose_name = 'Pais'
-#         verbose_name_plural = 'Paises'
-#         ordering = ('name',)
-#
-# class Provincia(BaseModel):
-#     pais = models.ForeignKey(Pais,verbose_name='Pais',null=True,blank=True,on_delete=models.CASCADE)
-#     name = models.CharField(verbose_name='Nombre', max_length=500)
-#     reference = spatialmodels.PolygonField(srid=3857)
-#
-#     def __str__(self):
-#         return f'{self.name}'
-#
-#     class Meta:
-#         verbose_name = 'Provincia'
-#         verbose_name_plural = 'Provincias'
-#         ordering = ('name',)
-#
-# class Canton(BaseModel):
-#     provincia = models.ForeignKey(Provincia,verbose_name='Provincia',null=True,blank=True,on_delete=models.CASCADE)
-#     name = models.CharField(verbose_name='Nombre', max_length=500)
-#     reference = spatialmodels.PolygonField(srid=3857)
-#
-#     def __str__(self):
-#         return f'{self.name}'
-#
-#     class Meta:
-#         verbose_name = 'Canton'
-#         verbose_name_plural = 'Cantones'
-#         ordering = ('name',)
-#
-# class Parroquia(BaseModel):
-#     canton = models.ForeignKey(Canton,verbose_name='Canton',null=True,blank=True,on_delete=models.CASCADE)
-#     name = models.CharField(verbose_name='Nombre', max_length=500)
-#     reference = spatialmodels.PolygonField(srid=3857)
-#
-#     def __str__(self):
-#         return f'{self.name}'
-#
-#     class Meta:
-#         verbose_name = 'Parroquia'
-#         verbose_name_plural = 'Parroquias'
-#         ordering = ('name',)
-
-class Person(BaseModel):
-    user = models.OneToOneField(User, verbose_name=u'Usuario', null=True, blank=True, on_delete=models.CASCADE)
-    identificador = models.CharField(verbose_name='Documento de identidad', max_length=100)
-    fullname = models.CharField(verbose_name='Nombres completos', max_length=800)
-    lastname = models.CharField(verbose_name='Apellido 1', max_length=500)
-    surname = models.CharField(verbose_name='Apellido 2', max_length=500)
-    telephone = models.CharField(verbose_name='Telefono', max_length=25)
-    mobile = models.CharField(verbose_name='Telefono celular', max_length=25)
-    principal_street = models.CharField(verbose_name='Calle 1', max_length=300)
-    secundary_street = models.CharField(verbose_name='Calle 2', max_length=300)
-    reference_direction = models.CharField(verbose_name='Referecia', max_length=300)
-    pais = models.ForeignKey(Sector, related_name='pais', verbose_name='Pais', null=True, blank=True,
-                             on_delete=models.CASCADE)
-    provincia = models.ForeignKey(Sector, related_name='provincia', verbose_name='Provincia', null=True, blank=True,
-                                  on_delete=models.CASCADE)
+# Person Model
+class Person(AuditBaseModel):
+    user = models.OneToOneField(User, verbose_name='User Account', null=True, blank=True, on_delete=models.CASCADE)
+    identifier = models.CharField(verbose_name='Identification Document', max_length=100)
+    full_name = models.CharField(verbose_name='Full Name', max_length=800)
+    first_last_name = models.CharField(verbose_name='First Last Name', max_length=500)
+    second_last_name = models.CharField(verbose_name='Second Last Name', max_length=500)
+    phone_number = models.CharField(verbose_name='Phone Number', max_length=25)
+    mobile_number = models.CharField(verbose_name='Mobile Number', max_length=25)
+    primary_street = models.CharField(verbose_name='Primary Street', max_length=300)
+    secondary_street = models.CharField(verbose_name='Secondary Street', max_length=300)
+    reference_point = models.CharField(verbose_name='Reference Point', max_length=300)
+    country = models.ForeignKey(Sector, related_name='country', verbose_name='Country', null=True, blank=True,
+                                on_delete=models.CASCADE)
+    province = models.ForeignKey(Sector, related_name='province', verbose_name='Province', null=True, blank=True,
+                                 on_delete=models.CASCADE)
     canton = models.ForeignKey(Sector, related_name='canton', verbose_name='Canton', null=True, blank=True,
                                on_delete=models.CASCADE)
-    parroquia = models.ForeignKey(Sector, related_name='parroquia', verbose_name='Parroquia', null=True, blank=True,
-                                  on_delete=models.CASCADE)
-    ubication = spatialmodels.PointField(srid=3857)
+    parish = models.ForeignKey(Sector, related_name='parish', verbose_name='Parish', null=True, blank=True,
+                               on_delete=models.CASCADE)
+    location_point = spatialmodels.PointField(srid=3857)
 
     def __str__(self):
-        return f'{self.identificador} - {self.fullname} {self.lastname} {self.surname}'
+        return f'{self.identifier} - {self.full_name} {self.first_last_name} {self.second_last_name}'
 
     class Meta:
-        verbose_name = 'Persona'
-        verbose_name_plural = 'Personas'
-        ordering = ('lastname', 'surname', 'fullname')
-        unique_together = ('identificador',)
+        verbose_name = 'Individual'
+        verbose_name_plural = 'Individuals'
+        ordering = ('first_last_name', 'second_last_name', 'full_name')
+        constraints = [
+            models.UniqueConstraint(fields=['identifier'], name='unique_identifier')
+        ]
 
-    def fully_names(self):
-        return f'{self.fullname} {self.lastname} {self.surname}'
+    def complete_name(self):
+        return f'{self.full_name} {self.first_last_name} {self.second_last_name}'
 
-    def minus_names(self):
-        return f'{self.fullname.split(" ")[0]} {self.lastname}'
+    def short_name(self):
+        return f'{self.full_name.split(" ")[0]} {self.first_last_name}'
 
 
-class Category(BaseModel):
-    name = models.CharField(verbose_name='Nombre de la categoría', max_length=300)
+# Category Model
+class Category(AuditBaseModel):
+    name = models.CharField(verbose_name='Category Name', max_length=300)
 
     def __str__(self):
         return f'{self.name}'
 
     class Meta:
-        verbose_name = 'Categoría'
-        verbose_name_plural = 'Categorías'
+        verbose_name = 'Research Category'
+        verbose_name_plural = 'Research Categories'
         ordering = ('name',)
 
-    def subcategorias(self):
-        return self.subcategory_set.filter(status=True)
+    def get_subcategories(self):
+        return self.subcategory_set.filter(is_active=True)
 
 
-class SubCategory(BaseModel):
-    category = models.ForeignKey(Category, verbose_name='Categoría', null=True, blank=True, on_delete=models.PROTECT)
-    name = models.CharField(verbose_name='Nombre de la subcategoría', max_length=300)
+# Subcategory Model
+class SubCategory(AuditBaseModel):
+    category = models.ForeignKey(Category, verbose_name='Parent Category', null=True, blank=True,
+                                 on_delete=models.PROTECT)
+    name = models.CharField(verbose_name='Subcategory Name', max_length=300)
 
     def __str__(self):
         return f'{self.category} - {self.name}'
 
     class Meta:
-        verbose_name = 'Sub Categoría'
-        verbose_name_plural = 'Sub Categorías'
+        verbose_name = 'Research Subcategory'
+        verbose_name_plural = 'Research Subcategories'
         ordering = ('name',)
 
-    def indicadores(self):
-        return self.indicator_set.filter(status=True)
+    def get_indicators(self):
+        return self.indicator_set.filter(is_active=True)
 
 
-class Indicator(BaseModel):
-    subcategory = models.ForeignKey(SubCategory, verbose_name='Sub Categoría', null=True, blank=True,
+# Indicator Model
+class Indicator(AuditBaseModel):
+    subcategory = models.ForeignKey(SubCategory, verbose_name='Parent Subcategory', null=True, blank=True,
                                     on_delete=models.PROTECT)
-    name = models.CharField(verbose_name='Nombre del indicador', max_length=300)
+    name = models.CharField(verbose_name='Indicator Name', max_length=300)
 
     def __str__(self):
         return f'{self.subcategory} - {self.name}'
 
     class Meta:
-        verbose_name = 'Indicador'
-        verbose_name_plural = 'Indicadores'
+        verbose_name = 'Research Indicator'
+        verbose_name_plural = 'Research Indicators'
         ordering = ('name',)
 
-    def dataindicadores(self):
-        return self.indicatordata_set.filter(status=True)
+    def get_indicator_data(self):
+        return self.indicatordata_set.filter(is_active=True)
 
 
-TYPE_GEODATA = (
-    (0, 'NINGUNA'),
-    (1, 'PUNTO'),
-    (2, 'LINEA'),
-    (3, 'POLIGONO'),
+# GIS Data Types for Template
+GEODATA_TYPE_CHOICES = (
+    (0, 'NONE'),
+    (1, 'POINT'),
+    (2, 'LINE'),
+    (3, 'POLYGON'),
 )
 
-TYPE_VALUE = (
-    (0, 'NINGUNO'),
-    (1, 'ENTERO'),
-    (2, 'PORCENTAJE'),
+# Value Types for Template
+VALUE_TYPE_CHOICES = (
+    (0, 'NONE'),
+    (1, 'INTEGER'),
+    (2, 'PERCENTAGE'),
+    (3, 'NUMBER'),
+    (4, 'DECIMAL NUMBER'),
+    (5, 'TEXT'),
 )
 
 
-class TypeSource(BaseModel):
-    name = models.CharField(verbose_name='Nombre', max_length=350)
+# Source Type Model
+class SourceType(AuditBaseModel):
+    name = models.CharField(verbose_name='Source Type Name', max_length=350)
 
     def __str__(self):
         return f'{self.name}'
 
     class Meta:
-        verbose_name = 'Tipo de fuente'
-        verbose_name_plural = 'Tipos de fuentes'
+        verbose_name = 'Data Source Type'
+        verbose_name_plural = 'Data Source Types'
         ordering = ('name',)
 
 
-class IndicatorData(BaseModel):
-    typesource = models.ForeignKey(TypeSource, verbose_name='Tipo de fuente', null=True, blank=True, on_delete=models.CASCADE)
-    person = models.ForeignKey(Person, verbose_name='Persona', null=True, blank=True, on_delete=models.CASCADE)
-    indicator = models.ForeignKey(Indicator, verbose_name='Indicador', null=True, blank=True, on_delete=models.CASCADE)
-    description = models.TextField(verbose_name='Descripción', default='')
-    type_value = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_VALUE, default=0)
-    value = models.IntegerField(verbose_name='Valor', default=0)
+# Template for Indicators
+class IndicatorTemplate(AuditBaseModel):
+    source_type = models.ForeignKey(SourceType, verbose_name='Data Source Type', null=True, blank=True,
+                                    on_delete=models.CASCADE)
+    person = models.ForeignKey(Person, verbose_name='Related Individual', null=True, blank=True,
+                               on_delete=models.CASCADE)
+    indicator = models.ForeignKey(Indicator, verbose_name='Research Indicator', null=True, blank=True,
+                                  on_delete=models.CASCADE)
+    description = models.TextField(verbose_name='Description', default='')
 
     def __str__(self):
-        return f'{self.indicator}: {self.value}({self.type_value})'
+        return f'{self.indicator}: {self.description}'
 
     class Meta:
-        verbose_name = 'Información indicador'
-        verbose_name_plural = 'Información indicadores'
+        verbose_name = 'Indicator Data Template'
+        verbose_name_plural = 'Indicator Data Templates'
         ordering = ('indicator', 'pk')
 
 
-class IndicatorDataExtra(BaseModel):
-    class TypeIndicator:
-        NUMBER = 'NUMERO'
-        TEXT = 'TEXTO'
-        LIST = 'LISTA'  # EJ. [1,2,3,4]
-        JSON = 'JSON'  # EJ {'data':{'ejemplo':'prueba'}}
-
-    inidatordata = models.ForeignKey(IndicatorData, verbose_name='Indicador', null=True, blank=True, on_delete=models.CASCADE)
-    type_value = models.IntegerField(verbose_name='Tipo de valor', choices=TYPE_VALUE, default=TypeIndicator.NUMBER)
-    name = models.CharField(verbose_name='Nombre', max_length=350)
-    value = models.TextField(verbose_name='Valor')
-
-
-class IndicatorResult(models.Model):
-    # Ubicación geográfica (Sector)
-    sector = models.ForeignKey(Sector, verbose_name='Sector', on_delete=models.PROTECT)
-    # Tipo de geografía (GIS Model)
-    gis_model = models.ForeignKey(GISModel, verbose_name='Modelo GIS', on_delete=models.CASCADE)
-    # Datos del Indicador
-    indicator_data = models.ForeignKey(IndicatorData, verbose_name='Datos del Indicador', on_delete=models.CASCADE)
+# Extra Data Template
+class ExtraDataTemplate(AuditBaseModel):
+    indicator_data = models.ForeignKey(IndicatorTemplate, verbose_name='Indicator Data', null=True, blank=True,
+                                       on_delete=models.CASCADE)
+    value_type = models.IntegerField(verbose_name='Value Type', choices=VALUE_TYPE_CHOICES, default=3)
+    name = models.CharField(verbose_name='Field Name', max_length=350)
+    precision = models.IntegerField(default=0)
 
     class Meta:
-        verbose_name = 'Registro del Formulario'
-        verbose_name_plural = 'Registros del Formulario'
-        ordering = ('sector', 'gis_model', 'indicator_data')
+        verbose_name = 'Extra Data Template'
+        verbose_name_plural = 'Extra Data Templates'
+        ordering = ('name',)
+
+
+# GIS Template Model
+class GISTemplate(models.Model):
+    # Geographic location (Sector)
+    sector = models.ForeignKey(Sector, verbose_name='Geographical Sector', on_delete=models.PROTECT)
+    # GIS Model
+    gis_record = models.ForeignKey(GISRecord, verbose_name='GIS Record', on_delete=models.CASCADE)
+    # Indicator Data
+    indicator_data = models.ForeignKey(IndicatorTemplate, verbose_name='Indicator Data', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'GIS Data Template'
+        verbose_name_plural = 'GIS Data Templates'
+        ordering = ('sector', 'gis_record', 'indicator_data')
 
     def __str__(self):
-        return f'{self.sector} - {self.gis_model} - {self.indicator_data}'
+        return f'{self.sector} - {self.gis_record} - {self.indicator_data}'

@@ -28,7 +28,7 @@ class Home(TemplateView):
         self.extra_context = context
         return super().get_context_data()
 
-@method_decorator(login_required(), name="dispatch")
+# @method_decorator(login_required(), name="dispatch")
 class Panel(TemplateView):
 
     def get(self, request, *args, **kwargs):

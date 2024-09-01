@@ -92,9 +92,12 @@ def read_migrate_sectores_cant():
             result, gis_id = add_gis_secto(geom)
             if not result:
                 raise NameError(f"No se pudo agregar la provincia {name}")
+            mastersector = None
             if shp.DPA_CANTON: add_detail_gis(gis_id, 'DPA_CANTON', shp.DPA_CANTON)
             if shp.DPA_PROVIN: add_detail_gis(gis_id, 'DPA_PROVIN', shp.DPA_PROVIN)
-            if shp.DPA_DESPRO: add_detail_gis(gis_id, 'DPA_DESPRO', shp.DPA_DESPRO)
+            if shp.DPA_DESPRO:
+                add_detail_gis(gis_id, 'DPA_DESPRO', shp.DPA_DESPRO)
+                mastersector = Sector.objects.filter(name__icontains=str(shp.DPA_DESPRO)).order_by('-id').first()
             if shp.OBJECTID: add_detail_gis(gis_id, 'OBJECTID', shp.OBJECTID)
             if shp.DPA_ANIO: add_detail_gis(gis_id, 'DPA_ANIO', shp.DPA_ANIO)
             if shp.DPA_VALOR: add_detail_gis(gis_id, 'DPA_VALOR', shp.DPA_VALOR)
@@ -104,7 +107,8 @@ def read_migrate_sectores_cant():
                 sector = Sector(
                     type_sector = typeSector,
                     name = name,
-                    gismodel_id = gis_id
+                    gismodel_id = gis_id,
+                    sectormaster=mastersector
                 )
                 sector.save()
                 print(f"Sector {name}({typeSector.name})")
