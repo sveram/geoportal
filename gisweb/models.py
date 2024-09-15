@@ -31,12 +31,12 @@ class AuditBaseModel(models.Model):
 # GIS Model type options
 GIS_TYPE_CHOICES = (
     (0, 'File'),
-    (1, 'Point Geometry'),
-    (2, 'LineString Geometry'),
-    (3, 'Polygon Geometry'),
-    (4, 'MultiPoint Geometry'),
-    (5, 'MultiLineString Geometry'),
-    (6, 'MultiPolygon Geometry'),
+    (1, 'Point'),
+    (2, 'LineString'),
+    (3, 'Polygon'),
+    (4, 'MultiPoint'),
+    (5, 'MultiLineString'),
+    (6, 'MultiPolygon'),
     (7, 'Raster File'),
 )
 

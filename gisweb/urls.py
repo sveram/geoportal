@@ -4,6 +4,8 @@ from django.urls import path, include
 
 from gisweb.commonview import CommonViews
 from gisweb.sector_type_views import SectorTypeListView, SectorTypeDeleteView, SectorTypeCreateUpdateView
+from gisweb.sector_views import SectorListView, SectorCreateUpdateView, get_parent_sectors, save_location, \
+    get_gis_record
 from gisweb.views import Panel, CargarSectoresView, CargarMapSectoreView
 from gisweb import commonview as m
 
@@ -26,4 +28,11 @@ urlpatterns = [
     path('sector_type/add/', SectorTypeCreateUpdateView.as_view(), name='sector_type_create'),
     path('sector_type/<int:pk>/edit/', SectorTypeCreateUpdateView.as_view(), name='sector_type_edit'),
     path('sector_type/<int:pk>/delete/', SectorTypeDeleteView.as_view(), name='sector_type_delete'),
+
+    path('sectors', SectorListView.as_view(), name='sector_list'),
+    path('sectors/add/', SectorCreateUpdateView.as_view(), name='sector_create'),
+    path('sectors/<int:pk>/edit/', SectorCreateUpdateView.as_view(), name='sector_edit'),
+    path('sectors/save-location/', save_location, name='save_location'),
+    path('sectors/<int:pk>/get-gis/', get_gis_record, name='get_gis_record'),
+    path('ajax/get-parent-sectors/', get_parent_sectors, name='get_parent_sectors'),
 ]

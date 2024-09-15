@@ -48,32 +48,32 @@ class ChangePasswordForm(forms.Form):
         return cleaned
 
 
-class SectorForm(forms.ModelForm):
-    # Campos de GISRecord que se incluirán en el formulario de Sector
-    gis_type = forms.ChoiceField(choices=GIS_TYPE_CHOICES, label='Tipo de Geografía')
-    data_file = forms.FileField(required=False, label='Archivo de Datos (Opcional)')
-    srid = forms.IntegerField(initial=3857, label='SRID')
-
-    class Meta:
-        model = Sector
-        fields = ['sector_type', 'name', 'parent_sector']
-
-    def save(self, commit=True):
-        # Guardamos primero el Sector
-        sector = super().save(commit=False)
-
-        # Crear o asociar un GISRecord
-        gisrecord = GISRecord(
-            gis_type=self.cleaned_data['gis_type'],
-            data_file=self.cleaned_data.get('data_file'),
-            srid=self.cleaned_data['srid']
-        )
-        if commit:
-            gisrecord.save()  # Guardar el GISRecord
-            sector.associated_gis_record = gisrecord  # Asociar el GISRecord al Sector
-            sector.save()  # Guardar el Sector con el GISRecord asociado
-
-        return sector
+# class SectorForm(forms.ModelForm):
+#     # Campos de GISRecord que se incluirán en el formulario de Sector
+#     gis_type = forms.ChoiceField(choices=GIS_TYPE_CHOICES, label='Tipo de Geografía')
+#     data_file = forms.FileField(required=False, label='Archivo de Datos (Opcional)')
+#     srid = forms.IntegerField(initial=3857, label='SRID')
+#
+#     class Meta:
+#         model = Sector
+#         fields = ['sector_type', 'name', 'parent_sector']
+#
+#     def save(self, commit=True):
+#         # Guardamos primero el Sector
+#         sector = super().save(commit=False)
+#
+#         # Crear o asociar un GISRecord
+#         gisrecord = GISRecord(
+#             gis_type=self.cleaned_data['gis_type'],
+#             data_file=self.cleaned_data.get('data_file'),
+#             srid=self.cleaned_data['srid']
+#         )
+#         if commit:
+#             gisrecord.save()  # Guardar el GISRecord
+#             sector.associated_gis_record = gisrecord  # Asociar el GISRecord al Sector
+#             sector.save()  # Guardar el Sector con el GISRecord asociado
+#
+#         return sector
 
 class GISRecordForm(forms.ModelForm):
     class Meta:
@@ -152,6 +152,7 @@ class IndicatorForm(forms.ModelForm):
         model = Indicator
         fields = ['subcategory', 'name']
 
+
 class SectorTypeForm(forms.ModelForm):
     class Meta:
         model = SectorType
@@ -163,4 +164,16 @@ class SectorTypeForm(forms.ModelForm):
         widgets = {
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+
+class SectorForm(forms.ModelForm):
+    class Meta:
+        model = Sector
+        fields = ['sector_type', 'name', 'parent_sector',]
+        widgets = {
+            'sector_type': forms.Select(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'parent_sector': forms.Select(attrs={'class': 'form-control select2'}),
+            # 'associated_gis_record': forms.Select(attrs={'class': 'form-control'}),
         }
