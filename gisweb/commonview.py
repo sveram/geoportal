@@ -15,55 +15,54 @@ from gisweb.forms import ResetPasswordForm, ChangePasswordForm
 from gisweb.models import Person
 
 
-def adddatauser(request, context):
+def add_data_user(request, context):
     if 'person' not in request.session:
         if not request.user.is_authenticated:
-            raise Exception('Usuario no se encuentra autentificado en el sistema')
+            raise Exception('User is not authenticated in the system')
         context['person'] = Person.objects.get(user=request.user)
 
 
 class ResetPasswordView(FormView):
     form_class = ResetPasswordForm
-    template_name= 'registration/password_reset_email.html'
+    template_name = 'registration/password_reset_email.html'
     success_url = reverse_lazy(settings.LOGIN_REDIRECT_URL)
 
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request,*args,**kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
-    # def send_email_reset_pwd(self,request,user,url=''):
+    # def send_email_reset_pwd(self, request, user, url=''):
     #     data = {}
     #     try:
     #         user.token = uuid.uuid4()
-    #         user.save(request,'edit')
+    #         user.save(request, 'edit')
     #         mailServer = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
     #         print(mailServer.ehlo())
     #         mailServer.starttls()
     #         print(mailServer.ehlo())
     #         mailServer.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
-    #         print('Conectado..')
+    #         print('Connected..')
     #
     #         email_to = user.email
-    #         # Construimos el mensaje simple
-    #         mensaje = MIMEMultipart()
-    #         mensaje['From'] = settings.EMAIL_HOST_USER
-    #         mensaje['To'] = email_to
-    #         mensaje['Subject'] = "Reseteo de Contraseña"
+    #         # Construct the simple message
+    #         message = MIMEMultipart()
+    #         message['From'] = settings.EMAIL_HOST_USER
+    #         message['To'] = email_to
+    #         message['Subject'] = "Password Reset"
     #
     #         content = render_to_string('send_email.html', {
-    #             'link_resetpwd':F"{url}/change/password/{str(user.token)}/",
-    #             'link_home':url,
+    #             'link_resetpwd': f"{url}/change/password/{str(user.token)}/",
+    #             'link_home': url,
     #             'user': user
     #         })
-    #         mensaje.attach(MIMEText(content, 'html'))
+    #         message.attach(MIMEText(content, 'html'))
     #
-    #         mailServer.sendmail(settings.EMAIL_HOST_USER,
-    #                             email_to,mensaje.as_string())
-    #         print('Correo enviado correctamente')
+    #         mailServer.sendmail(settings.EMAIL_HOST_USER, email_to, message.as_string())
+    #         print('Email sent successfully')
     #     except Exception as e:
     #         data['error'] = str(e)
     #     return data
-    #
+
     def post(self, request, *args, **kwargs):
         data = {}
         try:
@@ -71,31 +70,33 @@ class ResetPasswordView(FormView):
             if form.is_valid():
                 user = form.get_user()
                 url = self.request.META['HTTP_ORIGIN']
-                # data = self.send_email_reset_pwd(request,user,url)
+                # data = self.send_email_reset_pwd(request, user, url)
             else:
                 print(form.errors)
                 data['error'] = form.errors
         except Exception as ex:
             data['error'] = str(ex)
-        return JsonResponse(data,safe=False)
+        return JsonResponse(data, safe=False)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Reseteo de contraseña'
+        context['title'] = 'Password Reset'
         return context
+
 
 # class MyPasswordChangeView(FormView):
 #     form_class = ChangePasswordForm
-#     template_name='registration/changepwd.html'
-#     success_url = reverse_lazy(settings.LOGIN_REDIRECT_URL)
+#     template_name = 'registration/changepwd.html'
+#     success_url = reverse_lazy('gisweb:login')
 #
 #     @method_decorator(csrf_exempt)
 #     def dispatch(self, request, *args, **kwargs):
-#         return super().dispatch(request,*args,**kwargs)
+#         return super().dispatch(request, *args, **kwargs)
+#
 #     def get(self, request, *args, **kwargs):
 #         token = self.kwargs['token']
-#         # if Persona.objects.filter(token=token).exists():
-#         #     return super().get(request,*args,**kwargs)
+#         # if Person.objects.filter(token=token).exists():
+#         #     return super().get(request, *args, **kwargs)
 #         return HttpResponseRedirect('/')
 #
 #     def post(self, request, *args, **kwargs):
@@ -104,28 +105,28 @@ class ResetPasswordView(FormView):
 #             form = ChangePasswordForm(request.POST)
 #             if form.is_valid():
 #                 pass
-#                 # user = Persona.objects.get(token=self.kwargs['token'])
-#                 # user.usuario.set_password(request.POST['clave'])
+#                 # user = Person.objects.get(token=self.kwargs['token'])
+#                 # user.user.set_password(request.POST['password'])
 #                 # user.token = uuid.uuid4()
-#                 # user.save(request,'edit')
+#                 # user.save(request, 'edit')
 #             else:
 #                 data['error'] = form.errors
 #         except Exception as ex:
 #             data['error'] = str(ex)
-#         return JsonResponse(data,safe=False)
-#
+#         return JsonResponse(data, safe=False)
 #
 #     def get_context_data(self, **kwargs):
 #         context = super().get_context_data(**kwargs)
-#         context['titulo'] = 'Reseteo de contraseña'
+#         context['title'] = 'Change Password'
 #         return context
 
 class ChangePasswordView(FormView):
     # form_class = ChangePasswordForm
-    template_name='registration/changepwd.html'
-    # success_url=reverse_lazy('gisweb:login')
+    template_name = 'registration/changepwd.html'
 
-    def get(self, request,*args, **kwargs):
+    # success_url = reverse_lazy('gisweb:login')
+
+    def get(self, request, *args, **kwargs):
         form = ChangePasswordForm()
         return render(request, self.template_name, {'form': form})
 
@@ -133,34 +134,35 @@ class ChangePasswordView(FormView):
         form = ChangePasswordForm(request.POST)
         if not form.is_valid():
             return render(request, self.template_name, {'form': form})
-        return redirect('cambiar_contraseña_exitoso')
+        return redirect('password_change_successful')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Cambiar contraseña'
+        context['title'] = 'Change Password'
         return context
 
 
-class Commonviews(TemplateView):
+class CommonViews(TemplateView):
     initial = {}
     template_name = 'registration/login.html'
 
     def post(self, request, *args, **kwargs):
-        context={}
+        data = {}
         try:
             username = request.POST['username'].strip()
             password = request.POST['password'].strip()
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 if user.is_active:
-                    login(request,user)
-                    return HttpResponseRedirect('/')
+                    login(request, user)
+                    data['result'] = True
+                    data['to'] = '/'  # Redirect to home or any other page
                 else:
-                    raise NameError("El usuario esta inactivo")
+                    raise NameError("User is inactive")
             else:
-                raise NameError('Credenciales incorrectas!')
+                raise NameError('Incorrect credentials!')
         except Exception as ex:
-            err_ = f'{ex.__str__()}'
-            context['error'] = err_
-            print(sys.exc_info()[-1].tb_lineno)
-            return render(request,'registration/login.html', context)
+            data['result'] = False
+            data['error'] = str(ex)
+
+        return JsonResponse(data)

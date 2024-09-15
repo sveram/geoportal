@@ -63,12 +63,12 @@ class GISRecord(AuditBaseModel):
     def save(self, *args, **kwargs):
         if not self.srid:
             self.srid = 3857  # Default SRID value
-        self.point_geometry.srid = self.srid
-        self.linestring_geometry.srid = self.srid
-        self.polygon_geometry.srid = self.srid
-        self.multipoint_geometry.srid = self.srid
-        self.multilinestring_geometry.srid = self.srid
-        self.multipolygon_geometry.srid = self.srid
+        if self.point_geometry: self.point_geometry.srid = self.srid
+        if self.linestring_geometry: self.linestring_geometry.srid = self.srid
+        if self.polygon_geometry: self.polygon_geometry.srid = self.srid
+        if self.multipoint_geometry: self.multipoint_geometry.srid = self.srid
+        if self.multilinestring_geometry: self.multilinestring_geometry.srid = self.srid
+        if self.multipolygon_geometry: self.multipolygon_geometry.srid = self.srid
         super(GISRecord, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -93,7 +93,8 @@ class GISDetailRecord(AuditBaseModel):
 
 # Sector Type
 class SectorType(AuditBaseModel):
-    name = models.CharField(verbose_name='Sector Type Name', max_length=350)
+    order = models.IntegerField(verbose_name='Order', null=True, blank=True)
+    name = models.CharField(verbose_name='Sector Type Name', max_length=350, unique=True)
 
     def __str__(self):
         return f'{self.name}'
@@ -101,7 +102,7 @@ class SectorType(AuditBaseModel):
     class Meta:
         verbose_name = 'Sector Type'
         verbose_name_plural = 'Sector Types'
-        ordering = ('name',)
+        ordering = ('order','name')
 
 
 # Sector Model

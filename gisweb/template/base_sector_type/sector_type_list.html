@@ -1,0 +1,204 @@
+{% extends 'base_v1_1.html' %}
+
+{% block main %}
+    <div class="container mt-4">
+        <button class="btn btn-primary mb-3" id="add-sector-btn">
+            <i class="fas fa-plus"></i> Add
+        </button>
+
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for sector_type in sector_types %}
+                        <tr>
+                            <td>{{ sector_type.order }}</td>
+                            <td>{{ sector_type.name }}</td>
+                            <td>
+                                <!-- Botón de editar con icono de "pen" -->
+                                <button class="btn btn-sm btn-warning edit-sector-btn" data-id="{{ sector_type.id }}">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+
+                                <!-- Botón de eliminar con icono de "trash" -->
+                                <button class="btn btn-sm btn-danger delete-sector-btn" data-id="{{ sector_type.id }}"
+                                        data-name="{{ sector_type.name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div class="modal fade" id="sectorTypeModal" tabindex="-1" aria-labelledby="sectorTypeModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sectorTypeModalLabel">Add/Edit Sector Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="sectorTypeForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_order" class="form-label">Order</label>
+                            <input type="number" class="form-control" id="id_order" name="order">
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Sector Type Name</label>
+                            <input type="text" class="form-control" id="id_name" name="name">
+                        </div>
+                        <input type="hidden" id="sectorTypeId">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveSectorBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block js_extra %}
+    <!-- Include SweetAlert and Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Verificar si el botón de agregar sector existe antes de agregar el listener
+            const addSectorBtn = document.getElementById('add-sector-btn');
+            if (addSectorBtn) {
+                addSectorBtn.addEventListener('click', function () {
+
+                    // Limpiar errores previos antes de hacer la petición
+                    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                    document.getElementById('sectorTypeModalLabel').innerText = "Add Sector Type";
+                    document.getElementById('sectorTypeForm').reset();
+                    document.getElementById('sectorTypeId').value = '';
+                    new bootstrap.Modal(document.getElementById('sectorTypeModal')).show();
+                });
+            }
+
+            // Verificar si los botones de edición existen antes de agregar los listeners
+            const editSectorBtns = document.querySelectorAll('.edit-sector-btn');
+            editSectorBtns.forEach(button => {
+                button.addEventListener('click', function () {
+                    const sectorId = this.dataset.id;
+                    document.getElementById('sectorTypeModalLabel').innerText = "Edit Sector Type";
+
+                    // Limpiar errores previos antes de hacer la petición
+                    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+                    fetch(`/sector_type/${sectorId}/edit/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('id_order').value = data.order;
+                            document.getElementById('id_name').value = data.name;
+                            document.getElementById('sectorTypeId').value = data.id;
+                            new bootstrap.Modal(document.getElementById('sectorTypeModal')).show();
+                        });
+                });
+            });
+
+            // Save Button in Modal
+            const saveSectorBtn = document.getElementById('saveSectorBtn');
+            if (saveSectorBtn) {
+                saveSectorBtn.addEventListener('click', function () {
+                    const sectorId = document.getElementById('sectorTypeId').value;
+                    const formData = new FormData(document.getElementById('sectorTypeForm'));
+                    const url = sectorId ? `/sector_type/${sectorId}/edit/` : '/sector_type/add/';
+                    const method = sectorId ? 'POST' : 'POST';
+                    // Limpiar errores previos antes de hacer la petición
+                    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+                    fetch(url, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                            'Accept': 'application/json',
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(err => {
+                                    throw err
+                                }); // Handle errors
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();  // Reload page on success
+                            } else {
+                                // Show form validation errors in the modal
+                                console.error(data.errors);
+                                for (const [field, messages] of Object.entries(data.errors)) {
+                                    const fieldElement = document.getElementById(`id_${field}`);
+                                    fieldElement.classList.add('is-invalid');  // Mark the field as invalid
+                                    const errorDiv = document.createElement('div');
+                                    errorDiv.classList.add('invalid-feedback');
+                                    errorDiv.innerText = messages.join(' ');
+                                    fieldElement.after(errorDiv);
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('There was a problem with the fetch operation:', error);
+                        });
+                });
+            }
+
+            // Delete Sector Button - SweetAlert Confirmation for logical deletion
+            const deleteSectorBtns = document.querySelectorAll('.delete-sector-btn');
+            deleteSectorBtns.forEach(button => {
+                button.addEventListener('click', function () {
+                    const sectorId = this.dataset.id;
+                    const sectorName = this.dataset.name;
+
+                    Swal.fire({
+                        title: `Are you sure you want to delete "${sectorName}"?`,
+                        text: "This action cannot be undone.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`/sector_type/${sectorId}/delete/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                                }
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        location.reload();  // Reload page on success
+                                    }
+                                });
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

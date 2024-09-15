@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-#if os.name == 'nt':
+# if os.name == 'nt':
 #    VENV_BASE = os.environ['VIRTUAL_ENV']
 #    os.environ['PATH'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo') + ';' + os.environ['PATH']
 #    os.environ['PROJ_LIB'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo\\data\\proj') + ';' + os.environ['PATH']
@@ -31,7 +31,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -43,9 +42,14 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.gis',
     'leaflet',
+    'crispy_forms',
+    'crispy_bootstrap5',  # Si vas a usar Bootstrap 5 como framework CSS
     'djgeojson',
     'gisweb',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,7 +67,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR,'templates'),
+            os.path.join(BASE_DIR, 'templates'),
             os.path.join(BASE_DIR, 'gisweb/template')
         ],
         'APP_DIRS': True,
@@ -80,7 +84,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'geoportal.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
@@ -94,7 +97,6 @@ DATABASES = {
         'PORT': '5432',  # Set to empty string for default. Not used with sqlite3.
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -114,7 +116,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -126,7 +127,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -134,32 +134,32 @@ STATIC_URL = 'static/'
 STATIC_ROOT = 'home/static'
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR,'static'),
-    os.path.join(BASE_DIR,'media'),
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'media'),
 )
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#LOGIN
+# LOGIN
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login"
 
 USE_I18N = True
-#if os.name == 'nt':
+# if os.name == 'nt':
 #    VIRTUAL_ENV_BASE = os.environ['VIRTUAL_ENV']
 #    os.environ['PATH'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
 #    os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_BASE, r'\Lib\site-packages\osgeo\data\proj')
-#GDAL_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\gdal304.dll'
-#GEOS_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\geos_c.dll'
+# GDAL_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\gdal304.dll'
+# GEOS_LIBRARY_PATH = r'D:\git\geoportal\venv\Lib\site-packages\osgeo\geos_c.dll'
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (-1.015209, -78.614672),
     'DEFAULT_ZOOM': 6,
     'MAX_ZOOM': 20,
-    'MIN_ZOOM':3,
+    'MIN_ZOOM': 3,
     'SCALE': 'both'
-}   
+}
