@@ -1,13 +1,15 @@
 from django.contrib.auth import logout
 from django.http import HttpResponseRedirect
-from django.urls import path, include
+from django.urls import path
 
-from gisweb.commonview import CommonViews
-from gisweb.sector_type_views import SectorTypeListView, SectorTypeDeleteView, SectorTypeCreateUpdateView
-from gisweb.sector_views import SectorListView, SectorCreateUpdateView, get_parent_sectors, save_location, \
+from gisweb.views.commonview import CommonViews
+from gisweb.views.sector_type_views import SectorTypeListView, SectorTypeDeleteView, SectorTypeCreateUpdateView
+from gisweb.views.sector_views import SectorListView, SectorCreateUpdateView, get_parent_sectors, save_location, \
     get_gis_record
-from gisweb.views import Panel, CargarSectoresView, CargarMapSectoreView
-from gisweb import commonview as m
+from gisweb.views import commonview as m
+from gisweb.views.template_views import IndicatorTemplateListView, IndicatorTemplateDeleteView, \
+    IndicatorTemplateCreateUpdateView, get_subcategories, get_indicators
+from gisweb.views.views import Panel, CargarSectoresView, CargarMapSectoreView
 
 
 def logoutpru(request):
@@ -22,7 +24,7 @@ urlpatterns = [
     path(r'logout', logoutpru, name='logoutper'),
     path(r'reset/password/', m.ResetPasswordView.as_view(), name='reset_password'),
     path(r'change/password/<str:token>/', m.ChangePasswordView.as_view(), name='change_password'),
-    path(r'login', CommonViews.as_view(), name='loginper'),
+    path(r'accounts/login/', CommonViews.as_view(), name='loginper'),
 
     path('sector_type/', SectorTypeListView.as_view(), name='sector_type_list'),
     path('sector_type/add/', SectorTypeCreateUpdateView.as_view(), name='sector_type_create'),
@@ -35,4 +37,13 @@ urlpatterns = [
     path('sectors/save-location/', save_location, name='save_location'),
     path('sectors/<int:pk>/get-gis/', get_gis_record, name='get_gis_record'),
     path('ajax/get-parent-sectors/', get_parent_sectors, name='get_parent_sectors'),
+
+    path('indicator-templates/', IndicatorTemplateListView.as_view(), name='indicator-template-list'),
+    path('indicator-template/create/', IndicatorTemplateCreateUpdateView.as_view(), name='indicator-template-create'),
+    path('indicator-template/<int:pk>/update/', IndicatorTemplateCreateUpdateView.as_view(),
+         name='indicator-template-update'),
+    path('indicator-template/<int:pk>/delete/', IndicatorTemplateDeleteView.as_view(),
+         name='indicator-template-delete'),
+    path('ajax/get-subcategories/', get_subcategories, name='get_subcategories'),
+    path('ajax/get-indicators/', get_indicators, name='get_indicators'),
 ]

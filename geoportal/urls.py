@@ -21,7 +21,7 @@ from django.urls import path, include
 from geoportal import settings
 
 urlpatterns = [
-    path(r'admin_django/', admin.site.urls),
+    path(r'admin_django/', admin.site.urls, name='django_admin'),
     path('',include('gisweb.urls')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += [

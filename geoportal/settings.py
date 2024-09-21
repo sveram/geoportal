@@ -147,7 +147,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # LOGIN
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/login"
+LOGOUT_REDIRECT_URL = "/login_c"
 
 USE_I18N = True
 # if os.name == 'nt':

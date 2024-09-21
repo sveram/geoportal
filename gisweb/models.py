@@ -128,6 +128,20 @@ class Sector(AuditBaseModel):
     def get_subordinates(self):
         return Sector.objects.filter(is_active=True, parent_sector=self).order_by('sector_type', 'name')
 
+    def get_all_parents(self):
+        """
+        This function returns a list of all parent sectors recursively from the current sector
+        to the top-level parent sector (the root).
+        """
+        parents = []
+        current_sector = self
+
+        while current_sector.parent_sector:
+            parents.append(current_sector.parent_sector)
+            current_sector = current_sector.parent_sector
+
+        return parents
+
 
 # Person Model
 class Person(AuditBaseModel):
@@ -255,8 +269,6 @@ class SourceType(AuditBaseModel):
 
 # Template for Indicators
 class IndicatorTemplate(AuditBaseModel):
-    source_type = models.ForeignKey(SourceType, verbose_name='Data Source Type', null=True, blank=True,
-                                    on_delete=models.CASCADE)
     person = models.ForeignKey(Person, verbose_name='Related Individual', null=True, blank=True,
                                on_delete=models.CASCADE)
     indicator = models.ForeignKey(Indicator, verbose_name='Research Indicator', null=True, blank=True,
@@ -289,16 +301,14 @@ class ExtraDataTemplate(AuditBaseModel):
 # GIS Template Model
 class GISTemplate(models.Model):
     # Geographic location (Sector)
-    sector = models.ForeignKey(Sector, verbose_name='Geographical Sector', on_delete=models.PROTECT)
-    # GIS Model
-    gis_record = models.ForeignKey(GISRecord, verbose_name='GIS Record', on_delete=models.CASCADE)
+    sector = models.ForeignKey(Sector, verbose_name='Geographical Sector', on_delete=models.PROTECT, null=True, blank=True)
     # Indicator Data
-    indicator_data = models.ForeignKey(IndicatorTemplate, verbose_name='Indicator Data', on_delete=models.CASCADE)
+    indicator_data = models.OneToOneField(IndicatorTemplate, verbose_name='Indicator Data', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = 'GIS Data Template'
         verbose_name_plural = 'GIS Data Templates'
-        ordering = ('sector', 'gis_record', 'indicator_data')
+        ordering = ('sector', 'indicator_data')
 
     def __str__(self):
-        return f'{self.sector} - {self.gis_record} - {self.indicator_data}'
+        return f'{self.sector} - {self.indicator_data}'

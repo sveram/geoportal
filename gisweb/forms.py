@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 from leaflet.forms.widgets import LeafletWidget
+from django.forms import inlineformset_factory
 
 from .models import *
 from crum import get_current_user
@@ -85,7 +86,26 @@ class GISRecordForm(forms.ModelForm):
 class IndicatorTemplateForm(forms.ModelForm):
     class Meta:
         model = IndicatorTemplate
-        fields = ['description', 'indicator']
+        fields = ['person', 'indicator', 'description']
+
+
+class ExtraDataTemplateForm(forms.ModelForm):
+    class Meta:
+        model = ExtraDataTemplate
+        fields = ['value_type', 'name', 'precision']
+
+
+class GISTemplateForm(forms.ModelForm):
+    class Meta:
+        model = GISTemplate
+        fields = ['sector']
+
+
+# Crear formset para manejar los datos extra relacionados con el indicador
+ExtraDataFormSet = inlineformset_factory(
+    IndicatorTemplate, ExtraDataTemplate, form=ExtraDataTemplateForm,
+    extra=1, can_delete=True
+)
 
 
 class LocationForm(forms.Form):
@@ -170,7 +190,7 @@ class SectorTypeForm(forms.ModelForm):
 class SectorForm(forms.ModelForm):
     class Meta:
         model = Sector
-        fields = ['sector_type', 'name', 'parent_sector',]
+        fields = ['sector_type', 'name', 'parent_sector', ]
         widgets = {
             'sector_type': forms.Select(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),

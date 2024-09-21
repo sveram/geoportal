@@ -50,7 +50,7 @@ class SectorAdmin(admin.ModelAdmin):
         # Sobrescribir save_model para usar el formulario personalizado
         form.save()  # Llamar al método save del formulario personalizado
 
-
+admin.site.register(Person, LeafletGeoAdmin)
 admin.site.register(Category, LeafletGeoAdmin)
 admin.site.register(SubCategory, LeafletGeoAdmin)
 admin.site.register(Indicator, LeafletGeoAdmin)
