@@ -162,6 +162,26 @@
                         <div class="collapse" id="base">
                             <ul class="nav nav-collapse">
                                 <li>
+                                    <a href="{% url 'category-list' %}">
+                                        <span class="sub-item">Categories</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'subcategory-list' %}">
+                                        <span class="sub-item">Sub-Categories</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'indicator-list' %}">
+                                        <span class="sub-item">Indicators</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url 'source-type-list' %}">
+                                        <span class="sub-item">Source types</span>
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{% url 'sector_type_list' %}">
                                         <span class="sub-item">Sector types</span>
                                     </a>
@@ -185,6 +205,22 @@
                                 <li>
                                     <a href="{% url 'indicator-template-list' %}">
                                         <span class="sub-item">Setting template</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a data-bs-toggle="collapse" href="#record_indicator">
+                            <i class="fas fa-layer-group"></i>
+                            <p>Record Information</p>
+                            <span class="caret"></span>
+                        </a>
+                        <div class="collapse" id="record_indicator">
+                            <ul class="nav nav-collapse">
+                                <li>
+                                    <a href="{% url 'indicator-record-list' %}">
+                                        <span class="sub-item">Indicators</span>
                                     </a>
                                 </li>
                             </ul>
@@ -246,7 +282,8 @@
                                 </div>
                                 <span class="profile-username">
                       <span class="op-7">Hi,</span>
-                      <span class="fw-bold">{% if request.person %}{{ request.person.short_name }}{% else %}{{ person.short_name }}{% endif %}</span>
+                      <span class="fw-bold">{% if request.person %}{{ request.person.short_name }}{% else %}
+                          {{ person.short_name }}{% endif %}</span>
                     </span>
                             </a>
                             <ul class="dropdown-menu dropdown-user animated fadeIn">

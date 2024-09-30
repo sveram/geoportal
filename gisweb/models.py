@@ -74,6 +74,23 @@ class GISRecord(AuditBaseModel):
     def __str__(self):
         return f"{self.get_gis_type_display()} (SRID: {self.srid})"
 
+    def get_geometry_geojson(self):
+        """Return the GeoJSON of the geometry based on the gis_type."""
+        if self.gis_type == 1 and self.point_geometry:
+            return self.point_geometry.json  # GeoJSON format
+        elif self.gis_type == 2 and self.linestring_geometry:
+            return self.linestring_geometry.json
+        elif self.gis_type == 3 and self.polygon_geometry:
+            return self.polygon_geometry.json
+        elif self.gis_type == 4 and self.multipoint_geometry:
+            return self.multipoint_geometry.json
+        elif self.gis_type == 5 and self.multilinestring_geometry:
+            return self.multilinestring_geometry.json
+        elif self.gis_type == 6 and self.multipolygon_geometry:
+            return self.multipolygon_geometry.json
+        else:
+            return None  # No valid geometry found
+
 
 # GIS Detail Record
 class GISDetailRecord(AuditBaseModel):
@@ -102,7 +119,7 @@ class SectorType(AuditBaseModel):
     class Meta:
         verbose_name = 'Sector Type'
         verbose_name_plural = 'Sector Types'
-        ordering = ('order','name')
+        ordering = ('order', 'name')
 
 
 # Sector Model
@@ -135,10 +152,13 @@ class Sector(AuditBaseModel):
         """
         parents = []
         current_sector = self
+        first = current_sector
 
         while current_sector.parent_sector:
             parents.append(current_sector.parent_sector)
             current_sector = current_sector.parent_sector
+        if first:
+            parents.append(first)
 
         return parents
 
@@ -291,17 +311,46 @@ class ExtraDataTemplate(AuditBaseModel):
     value_type = models.IntegerField(verbose_name='Value Type', choices=VALUE_TYPE_CHOICES, default=3)
     name = models.CharField(verbose_name='Field Name', max_length=350)
     precision = models.IntegerField(default=0)
+    short_name = models.CharField(verbose_name='Short name', default='')  # Field to export shapefile
 
     class Meta:
         verbose_name = 'Extra Data Template'
         verbose_name_plural = 'Extra Data Templates'
         ordering = ('name',)
 
+    def save(self, *args, **kwargs):
+        # Generar una abreviación del campo 'name', eliminando espacios y limitando a 10 caracteres
+        self.short_name = self.generate_short_name(self.name)
+        super(ExtraDataTemplate, self).save(*args, **kwargs)
+
+    def generate_short_name(self, name):
+        # Eliminar espacios y acortar el nombre a un máximo de 10 caracteres
+        short_name = name.replace(' ', '')[:10].lower()  # Quitar espacios y limitar a 10 caracteres
+        return short_name
+
+    def get_value_example_by_type(self):
+        if self.value_type == 0:
+            return ''
+        if self.value_type == 1:
+            return 10
+        if self.value_type == 2:
+            return 100
+        if self.value_type == 3:
+            return 1
+        if self.value_type == 4:
+            if self.precision:
+                return round(2.3554, self.precision)
+            return round(2.3554, 2)
+        if self.value_type == 5:
+            return 'Test'
+        return ''
+
 
 # GIS Template Model
-class GISTemplate(models.Model):
+class GISTemplate(AuditBaseModel):
     # Geographic location (Sector)
-    sector = models.ForeignKey(Sector, verbose_name='Geographical Sector', on_delete=models.PROTECT, null=True, blank=True)
+    sector = models.ForeignKey(Sector, verbose_name='Geographical Sector', on_delete=models.PROTECT, null=True,
+                               blank=True)
     # Indicator Data
     indicator_data = models.OneToOneField(IndicatorTemplate, verbose_name='Indicator Data', on_delete=models.CASCADE)
 
@@ -312,3 +361,23 @@ class GISTemplate(models.Model):
 
     def __str__(self):
         return f'{self.sector} - {self.indicator_data}'
+
+    def get_geom_type(self):
+        return self.sector.associated_gis_record.get_gis_type_display()
+
+
+class IndicatorRecord(AuditBaseModel):
+    indicator_template = models.ForeignKey(IndicatorTemplate, verbose_name='Template', on_delete=models.SET_NULL,
+                                           blank=True, null=True)
+    source_type = models.ForeignKey(SourceType, verbose_name='Source type', on_delete=models.PROTECT)
+    indicator = models.ForeignKey(Indicator, verbose_name='Indicator', on_delete=models.PROTECT)
+    sector = models.ForeignKey(Sector, verbose_name='Sector', on_delete=models.PROTECT)
+    gis = models.ForeignKey(GISRecord, verbose_name='Gis', on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=500, verbose_name='Name')
+    value = models.FloatField(verbose_name='Value', default=0.0)
+    date = models.DateField(verbose_name='Date', null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Record indicator'
+        verbose_name_plural = 'Records indicators'
+        ordering = ['name']

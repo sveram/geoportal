@@ -76,10 +76,16 @@ class ChangePasswordForm(forms.Form):
 #
 #         return sector
 
+class IndicatorRecordForm(forms.ModelForm):
+    class Meta:
+        model = IndicatorRecord
+        fields = ['indicator','sector','source_type', 'gis', 'name', 'value', 'date']
+
+
 class GISRecordForm(forms.ModelForm):
     class Meta:
         model = GISRecord
-        fields = ['gis_type', 'srid', 'point_geometry', 'linestring_geometry', 'polygon_geometry',
+        fields = ['gis_type', 'point_geometry', 'linestring_geometry', 'polygon_geometry',
                   'multipoint_geometry', 'multilinestring_geometry', 'multipolygon_geometry']
 
 
