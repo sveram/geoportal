@@ -6,7 +6,7 @@ django-crispy-forms==2.3
 django-crum==0.7.9
 django-geojson==4.1.0
 django-leaflet==0.30.1
-GDAL==3.2.2.1
+GDAL==3.13.0
 geopandas==1.1.2
 numpy==2.1.0
 packaging==24.1
